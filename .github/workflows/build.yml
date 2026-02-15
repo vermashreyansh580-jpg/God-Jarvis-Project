@@ -1,4 +1,4 @@
-name: Build VEGA Clean Force
+name: Build VEGA God Mode
 on: [push]
 
 jobs:
@@ -20,38 +20,47 @@ jobs:
         with:
           channel: 'stable'
       
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
+          # Audio drivers for build process
           sudo apt-get install -y portaudio19-dev libasound2-dev
-          pip install flet requests SpeechRecognition pyttsx3 plyer
+          
+      - name: Install Python Libraries
+        run: |
+          # Pehle pip upgrade karo
+          python -m pip install --upgrade pip
+          # requirements.txt se sab install karo
+          pip install -r requirements.txt
       
-      - name: 🗑️ Clean & Force Build
+      - name: 🚀 Locate & Build APK
         run: |
           # 1. Main.py dhoondo
-          echo "🔍 Searching for main.py..."
           TARGET_FILE=$(find . -name "main.py" -type f | head -n 1)
           
           if [ -z "$TARGET_FILE" ]; then
-            echo "❌ ERROR: main.py mili hi nahi!"
-            exit 1
+             echo "❌ Main.py nahi mili!"
+             exit 1
           fi
           
-          # 2. Us folder mein jao
           TARGET_DIR=$(dirname "$TARGET_FILE")
           cd "$TARGET_DIR"
-          echo "✅ Moved to directory: $TARGET_DIR"
           
-          # 3. Conflicting Configs Delete karo (Sabse Zaroori Step)
-          echo "🗑️ Deleting old config files to avoid errors..."
-          rm -f pyproject.toml flet.toml
+          echo "✅ Building in directory: $TARGET_DIR"
+          echo "📂 Checking for Config File..."
           
-          # 4. Ab direct command se build karo (Explicitly pointing to main)
-          echo "🚀 Building APK with Clean Slate..."
-          yes | flet build apk --module-name main --verbose
+          if [ -f "pyproject.toml" ]; then
+             echo "✅ pyproject.toml found! Permissions will be loaded."
+          else
+             echo "⚠️ WARNING: pyproject.toml nahi mila! Permissions shayad kaam na karein."
+          fi
+          
+          # 2. Build Command (Verbose mode for details)
+          # Hum '.' use kar rahe hain taaki wo pyproject.toml aur requirements.txt khud utha le
+          yes | flet build apk . --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VEGA-APK
+          name: VEGA-GOD-MODE
           path: "**/*.apk"
