@@ -1,5 +1,6 @@
-name: Build Jarvis FileGod
+name: Build VEGA Prime
 on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,15 +12,19 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - name: Install Libs
+      
+      - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y portaudio19-dev
-          pip install flet requests SpeechRecognition pyttsx3
+          pip install flet requests SpeechRecognition pyttsx3 plyer
+          
       - name: Build APK
-        run: flet build apk --name "JarvisFileGod"
-      - name: Upload
+        # 🔥 FIX: Removed --name argument. Flet will read config from toml.
+        run: flet build apk
+          
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Jarvis-APK
+          name: VEGA-AI-APK
           path: build/apk/*.apk
