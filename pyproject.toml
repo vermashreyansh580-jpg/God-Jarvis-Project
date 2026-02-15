@@ -1,0 +1,31 @@
+[tool.flet]
+product_name = "VEGA PRIME"
+org = "com.shrey.vega"
+description = "Ghost AI Assistant"
+
+[tool.flet.app]
+path = "main.py"
+
+[tool.flet.android]
+build_number = 1
+permissions = [
+    "INTERNET",
+    "RECORD_AUDIO",
+    "FOREGROUND_SERVICE",
+    "WAKE_LOCK",
+    "MODIFY_AUDIO_SETTINGS",
+    "READ_EXTERNAL_STORAGE",
+    "WRITE_EXTERNAL_STORAGE",
+    "MANAGE_EXTERNAL_STORAGE",
+    "QUERY_ALL_PACKAGES",
+    "SYSTEM_ALERT_WINDOW",
+    "ACCESS_NETWORK_STATE",
+    "READ_PHONE_STATE",
+    "CALL_PHONE"
+]
+
+[tool.flet.android.manifest]
+"android:foregroundServiceType" = "microphone"
+"android:requestLegacyExternalStorage" = "true"
+"android:usesCleartextTraffic" = "true"
+"android:launchMode" = "singleTop"
