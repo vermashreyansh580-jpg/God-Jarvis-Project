@@ -8,9 +8,14 @@ import time
 WAKE_WORD = "vega"
 
 class GhostVega:
-    def __init__(self):
-        self.engine = pyttsx3.init()
-        self.engine.setProperty('rate', 170) # Fast robotic voice
+    def __init__(self, page):
+        self.page = page
+        # Safe Initialization
+        try:
+            self.engine = pyttsx3.init()
+            self.engine.setProperty('rate', 170)
+        except:
+            print("TTS Engine Failed to Init")
         self.recognizer = sr.Recognizer()
 
     def speak(self, text):
@@ -18,59 +23,81 @@ class GhostVega:
             print(f"VEGA: {text}")
             self.engine.say(text)
             self.engine.runAndWait()
-        except:
-            pass
+        except Exception as e:
+            print(f"Voice Error: {e}")
+            # Agar awaz fail ho, toh screen par likh do (Fallback)
+            self.page.snack_bar = ft.SnackBar(ft.Text(f"VEGA: {text}"))
+            self.page.snack_bar.open = True
+            self.page.update()
 
-    def background_listen(self):
-        # Continuous Listening Loop
+    def background_listen(self, visual_feedback):
         with sr.Microphone() as source:
             self.recognizer.adjust_for_ambient_noise(source)
             while True:
                 try:
-                    # Green Dot will remain active here
+                    # Visual Feedback: Listening Mode (Dark Grey)
+                    visual_feedback("LISTENING...", "#111111")
+                    
                     audio = self.recognizer.listen(source, phrase_time_limit=5)
+                    
+                    # Visual Feedback: Processing (Pitch Black)
+                    visual_feedback("PROCESSING...", "black")
+                    
                     text = self.recognizer.recognize_google(audio).lower()
                     
                     if WAKE_WORD in text:
-                        self.speak("Listening Boss...")
-                        # Yahan tumhara Action Logic aayega
-                except:
+                        self.speak("At your service, Boss.")
+                        # Yahan Action Logic aayega
+                        
+                except Exception as e:
+                    # Agar kuch na sunayi de, wapas black kar do
+                    visual_feedback("", "black")
                     pass
 
 def main(page: ft.Page):
-    # --- GHOST UI (INVISIBLE) ---
+    # --- GHOST UI ---
     page.title = "VEGA CORE"
-    page.bgcolor = "black"  # Pitch Black
+    page.bgcolor = "black"
     page.padding = 0
-    page.window_width = 0
-    page.window_height = 0
     
-    vega = GhostVega()
+    # Isse app full screen lega par dikhega nahi
+    page.window_width = 400 
+    page.window_height = 800
+
+    vega = GhostVega(page)
     
-    # Status Text (Sirf Debugging ke liye, user ko barely dikhega)
-    status_label = ft.Text("SYSTEM BOOT...", color="#111111", size=10)
-
-    def initialize_system(e=None):
-        # 1. Update Status
-        status_label.value = "CORE ACTIVE"
-        page.update()
-        
-        # 2. Voice Feedback
-        vega.speak("System is Online, Boss.")
-        
-        # 3. Start Mic Thread
-        threading.Thread(target=vega.background_listen, daemon=True).start()
-
-    # Invisible Button (Full Screen Click)
-    # Android requires interaction to start Audio
-    start_btn = ft.Container(
+    status_label = ft.Text("TAP TO ACTIVATE VEGA", color="#222222", size=15)
+    
+    # Screen ka background change karne ke liye container ref
+    bg_container = ft.Container(
         content=status_label,
-        width=1000, height=2000, # Covers whole screen
+        expand=True,
         bgcolor="black",
-        on_click=initialize_system,
         alignment=ft.alignment.center
     )
 
-    page.add(start_btn)
+    def update_visuals(text, color):
+        # Thread se UI update karne ke liye safe tarika
+        status_label.value = text
+        bg_container.bgcolor = color
+        page.update()
+
+    def initialize_system(e):
+        status_label.value = "CORE ONLINE"
+        status_label.color = "#00FF00" # Green text for 1 second
+        page.update()
+        
+        # Bolne ke baad wapas invisible ho jayega
+        vega.speak("System Online.")
+        status_label.color = "#111111" # Almost invisible
+        page.update()
+        
+        # Thread Start
+        threading.Thread(target=vega.background_listen, args=(update_visuals,), daemon=True).start()
+
+    # Click event container par lagaya hai
+    bg_container.on_click = initialize_system
+
+    page.add(bg_container)
 
 ft.app(target=main)
