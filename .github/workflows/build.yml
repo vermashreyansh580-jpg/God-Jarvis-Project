@@ -1,4 +1,4 @@
-name: Build VEGA Reconstruction
+name: Build VEGA God Injection
 on: [push]
 
 jobs:
@@ -20,46 +20,112 @@ jobs:
         with:
           channel: 'stable'
       
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y portaudio19-dev libasound2-dev
           python -m pip install --upgrade pip
           pip install flet requests SpeechRecognition pyttsx3 plyer
       
-      - name: 🏗️ Create Clean Workspace
+      - name: 🛠️ FORCE CREATE FILES (No Searching)
         run: |
-          echo "🧹 Creating a clean build environment..."
-          mkdir vega_build_env
+          echo "🔥 Creating main.py directly..."
           
-          # 1. Main.py ko dhoond kar naye folder mein copy karo
-          MAIN_FILE=$(find . -name "main.py" -type f | head -n 1)
-          if [ -z "$MAIN_FILE" ]; then
-            echo "❌ CRITICAL: main.py mili hi nahi!"
-            exit 1
-          fi
-          echo "✅ Found main.py at: $MAIN_FILE"
-          cp "$MAIN_FILE" vega_build_env/main.py
-          
-          # 2. Requirements copy karo (agar hai)
-          REQ_FILE=$(find . -name "requirements.txt" -type f | head -n 1)
-          if [ ! -z "$REQ_FILE" ]; then
-             cp "$REQ_FILE" vega_build_env/requirements.txt
-          fi
-          
-          # 3. Config File (pyproject.toml) ko SCRIPT SE BANAO
-          # Taaki koi purani galti na rahe.
-          echo "📝 Generating fresh pyproject.toml..."
-          
-          cat <<EOF > vega_build_env/pyproject.toml
+          # --- PYTHON CODE START ---
+          cat <<EOF > main.py
+          import flet as ft
+          import speech_recognition as sr
+          import threading
+          import time
+          from plyer import tts
+
+          # --- VEGA CONFIG ---
+          WAKE_WORD = "vega"
+
+          class GhostVega:
+              def __init__(self, page):
+                  self.page = page
+                  self.recognizer = sr.Recognizer()
+
+              def speak(self, text):
+                  try:
+                      print(f"VEGA: {text}")
+                      tts.speak(text) 
+                  except:
+                      pass
+
+              def background_listen(self, visual_feedback):
+                  with sr.Microphone() as source:
+                      self.recognizer.adjust_for_ambient_noise(source)
+                      while True:
+                          try:
+                              visual_feedback("LISTENING...", "green")
+                              audio = self.recognizer.listen(source, phrase_time_limit=5)
+                              visual_feedback("PROCESSING...", "blue")
+                              
+                              text = self.recognizer.recognize_google(audio).lower()
+                              if WAKE_WORD in text:
+                                  self.speak("Yes Boss?")
+                          except:
+                              visual_feedback("STANDBY", "black")
+                              pass
+
+          def main(page: ft.Page):
+              page.title = "VEGA GOD MODE"
+              page.bgcolor = "black"
+              page.padding = 20
+              page.vertical_alignment = ft.MainAxisAlignment.CENTER
+              page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+
+              # --- PERMISSION HANDLER ---
+              def handle_permission_result(e):
+                  print(f"Permission result: {e}")
+
+              ph = ft.PermissionHandler(on_callback=handle_permission_result)
+              page.overlay.append(ph)
+
+              status_label = ft.Text("TAP TO ACTIVATE", color="red", size=20, weight="bold")
+              indicator = ft.Container(width=100, height=100, bgcolor="red", border_radius=50)
+
+              def update_visuals(text, color):
+                  status_label.value = text
+                  indicator.bgcolor = color
+                  page.update()
+
+              def start_vega():
+                  vega = GhostVega(page)
+                  vega.speak("Access Granted. System Online.")
+                  vega.background_listen(update_visuals)
+
+              def request_permissions(e=None):
+                  ph.request_permissions([ft.Permission.AUDIO_RECORDING, ft.Permission.STORAGE])
+                  status_label.value = "INITIALIZING..."
+                  status_label.color = "cyan"
+                  page.update()
+                  threading.Thread(target=start_vega, daemon=True).start()
+
+              page.add(
+                  indicator,
+                  ft.Container(height=20),
+                  status_label,
+                  ft.ElevatedButton("GRANT ACCESS", on_click=request_permissions, bgcolor="red", color="white")
+              )
+
+          ft.app(target=main)
+          EOF
+          # --- PYTHON CODE END ---
+
+          echo "🔥 Creating pyproject.toml directly..."
+          # --- CONFIG START ---
+          cat <<EOF > pyproject.toml
           [tool.flet]
-          product_name = "VEGA AI"
+          product_name = "VEGA GOD MODE"
           org = "com.shrey.vega"
           description = "System AI"
-          
+
           [tool.flet.app]
           path = "main.py"
-          
+
           [tool.flet.android]
           build_number = 1
           permissions = [
@@ -75,28 +141,25 @@ jobs:
             "ACCESS_NETWORK_STATE",
             "QUERY_ALL_PACKAGES"
           ]
-          
+
           [tool.flet.android.manifest]
           "android:foregroundServiceType" = "microphone"
           "android:requestLegacyExternalStorage" = "true"
           "android:usesCleartextTraffic" = "true"
           "android:manageSpaceActivity" = "com.shrey.vega.MainActivity"
           EOF
+          # --- CONFIG END ---
           
-          echo "✅ Clean Environment Ready:"
-          ls -R vega_build_env
-          
-      - name: 🚀 Build APK from Clean Room
+          echo "✅ Files Created Successfully!"
+          ls -la
+
+      - name: 🚀 Build APK (No Escape)
         run: |
-          # Naye folder ke andar jao
-          cd vega_build_env
-          
-          # Ab yahan sirf main.py aur config hai. Confusion impossible hai.
-          echo "🔨 Starting Flet Build..."
+          # Ab file 100% yahin hai, toh build hona hi padega
           yes | flet build apk . --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: VEGA-GOD-MODE
-          path: "vega_build_env/build/apk/*.apk"
+          path: "*.apk"
