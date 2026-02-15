@@ -10,73 +10,67 @@ WAKE_WORD = "vega"
 class GhostVega:
     def __init__(self):
         self.engine = pyttsx3.init()
-        # Voice Settings (Robotic/Fast)
-        self.engine.setProperty('rate', 170)
+        self.engine.setProperty('rate', 170) # Fast robotic voice
         self.recognizer = sr.Recognizer()
 
     def speak(self, text):
         try:
+            print(f"VEGA: {text}")
             self.engine.say(text)
             self.engine.runAndWait()
         except:
             pass
 
     def background_listen(self):
+        # Continuous Listening Loop
         with sr.Microphone() as source:
             self.recognizer.adjust_for_ambient_noise(source)
             while True:
                 try:
-                    # Hamesha sunta rahega (Green Dot On rahega)
+                    # Green Dot will remain active here
                     audio = self.recognizer.listen(source, phrase_time_limit=5)
                     text = self.recognizer.recognize_google(audio).lower()
                     
                     if WAKE_WORD in text:
-                        self.speak("Yes Boss?")
-                        # Yahan tumhara AI logic aayega (API call etc.)
-                        print(f"User said: {text}")
+                        self.speak("Listening Boss...")
+                        # Yahan tumhara Action Logic aayega
                 except:
                     pass
 
 def main(page: ft.Page):
-    # --- STEALTH UI ---
-    page.title = "VEGA SERVICE"
-    page.bgcolor = "black"  # Poora screen kaala
+    # --- GHOST UI (INVISIBLE) ---
+    page.title = "VEGA CORE"
+    page.bgcolor = "black"  # Pitch Black
     page.padding = 0
-    page.window_width = 0   # Koshish karega invisible hone ki
+    page.window_width = 0
     page.window_height = 0
-
+    
     vega = GhostVega()
+    
+    # Status Text (Sirf Debugging ke liye, user ko barely dikhega)
+    status_label = ft.Text("SYSTEM BOOT...", color="#111111", size=10)
 
-    def start_system(e=None):
-        # 1. Pehle bolega
+    def initialize_system(e=None):
+        # 1. Update Status
+        status_label.value = "CORE ACTIVE"
+        page.update()
+        
+        # 2. Voice Feedback
         vega.speak("System is Online, Boss.")
         
-        # 2. Fir background thread shuru
+        # 3. Start Mic Thread
         threading.Thread(target=vega.background_listen, daemon=True).start()
-        
-        # 3. Screen par "Core Active" likha aayega (Black on Black - Invisible)
-        page.add(ft.Text("CORE ACTIVE", color="black"))
-        page.update()
 
-    # Permissions Trigger Button (Sirf pehli baar dikhega agar theme alag ho)
-    # Background black hai, button bhi black/dark grey hoga.
-    start_btn = ft.ElevatedButton(
-        "INITIALIZE", 
-        on_click=start_system,
-        bgcolor="#111111", # Almost black
-        color="#333333"    # Very dark grey
+    # Invisible Button (Full Screen Click)
+    # Android requires interaction to start Audio
+    start_btn = ft.Container(
+        content=status_label,
+        width=1000, height=2000, # Covers whole screen
+        bgcolor="black",
+        on_click=initialize_system,
+        alignment=ft.alignment.center
     )
 
-    page.add(
-        ft.Container(
-            content=start_btn,
-            alignment=ft.alignment.center,
-            margin=ft.margin.only(top=300)
-        )
-    )
+    page.add(start_btn)
 
-    # Auto-Click logic (App khulte hi start karne ki koshish)
-    # Note: Android permissions maangne ke liye user interaction zaroori hota hai
-    # Isliye pehli baar button dabana padega, uske baad ye automatic lagega.
-    
 ft.app(target=main)
