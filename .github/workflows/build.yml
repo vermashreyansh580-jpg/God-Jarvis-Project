@@ -1,4 +1,4 @@
-name: Build VEGA Direct Target
+name: Build VEGA Reconstruction
 on: [push]
 
 jobs:
@@ -20,55 +20,83 @@ jobs:
         with:
           channel: 'stable'
       
-      - name: Install System Dependencies
+      - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y portaudio19-dev libasound2-dev
           python -m pip install --upgrade pip
+          pip install flet requests SpeechRecognition pyttsx3 plyer
       
-      - name: 📂 Move Files to Root (Safest Way)
+      - name: 🏗️ Create Clean Workspace
         run: |
-          # 1. Sabse pehle main.py dhoond kar Root par lao
-          MAIN_PATH=$(find . -name "main.py" -type f | head -n 1)
-          if [ -z "$MAIN_PATH" ]; then
-            echo "❌ ERROR: main.py mili hi nahi!"
+          echo "🧹 Creating a clean build environment..."
+          mkdir vega_build_env
+          
+          # 1. Main.py ko dhoond kar naye folder mein copy karo
+          MAIN_FILE=$(find . -name "main.py" -type f | head -n 1)
+          if [ -z "$MAIN_FILE" ]; then
+            echo "❌ CRITICAL: main.py mili hi nahi!"
             exit 1
           fi
-          if [ "$MAIN_PATH" != "./main.py" ]; then
-            mv "$MAIN_PATH" ./main.py
+          echo "✅ Found main.py at: $MAIN_FILE"
+          cp "$MAIN_FILE" vega_build_env/main.py
+          
+          # 2. Requirements copy karo (agar hai)
+          REQ_FILE=$(find . -name "requirements.txt" -type f | head -n 1)
+          if [ ! -z "$REQ_FILE" ]; then
+             cp "$REQ_FILE" vega_build_env/requirements.txt
           fi
           
-          # 2. pyproject.toml ko bhi Root par lao (Permissions ke liye)
-          CONF_PATH=$(find . -name "pyproject.toml" -type f | head -n 1)
-          if [ ! -z "$CONF_PATH" ] && [ "$CONF_PATH" != "./pyproject.toml" ]; then
-             mv "$CONF_PATH" ./pyproject.toml
-          fi
-
-          # 3. requirements.txt ko bhi lao
-          REQ_PATH=$(find . -name "requirements.txt" -type f | head -n 1)
-          if [ ! -z "$REQ_PATH" ] && [ "$REQ_PATH" != "./requirements.txt" ]; then
-             mv "$REQ_PATH" ./requirements.txt
-          fi
+          # 3. Config File (pyproject.toml) ko SCRIPT SE BANAO
+          # Taaki koi purani galti na rahe.
+          echo "📝 Generating fresh pyproject.toml..."
           
-          echo "✅ Files Moved. Ready to Build."
-          ls -la
+          cat <<EOF > vega_build_env/pyproject.toml
+          [tool.flet]
+          product_name = "VEGA AI"
+          org = "com.shrey.vega"
+          description = "System AI"
           
-      - name: Install Python Libraries
+          [tool.flet.app]
+          path = "main.py"
+          
+          [tool.flet.android]
+          build_number = 1
+          permissions = [
+            "INTERNET",
+            "RECORD_AUDIO",
+            "FOREGROUND_SERVICE",
+            "WAKE_LOCK",
+            "MODIFY_AUDIO_SETTINGS",
+            "READ_EXTERNAL_STORAGE",
+            "WRITE_EXTERNAL_STORAGE",
+            "MANAGE_EXTERNAL_STORAGE",
+            "SYSTEM_ALERT_WINDOW",
+            "ACCESS_NETWORK_STATE",
+            "QUERY_ALL_PACKAGES"
+          ]
+          
+          [tool.flet.android.manifest]
+          "android:foregroundServiceType" = "microphone"
+          "android:requestLegacyExternalStorage" = "true"
+          "android:usesCleartextTraffic" = "true"
+          "android:manageSpaceActivity" = "com.shrey.vega.MainActivity"
+          EOF
+          
+          echo "✅ Clean Environment Ready:"
+          ls -R vega_build_env
+          
+      - name: 🚀 Build APK from Clean Room
         run: |
-          if [ -f "requirements.txt" ]; then
-            pip install -r requirements.txt
-          else
-            pip install flet requests SpeechRecognition pyttsx3 plyer
-          fi
-
-      - name: 🚀 Build APK (Direct File Target)
-        run: |
-          # 🔥 YAHAN CHANGE HAI: Hum Folder (.) nahi, seedha File de rahe hain.
-          # Flet file ko build karega, aur bagal me padi config file se permissions le lega.
-          yes | flet build apk main.py --verbose
+          # Naye folder ke andar jao
+          cd vega_build_env
+          
+          # Ab yahan sirf main.py aur config hai. Confusion impossible hai.
+          echo "🔨 Starting Flet Build..."
+          yes | flet build apk . --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: VEGA-GOD-MODE
-          path: "*.apk"
+          path: "vega_build_env/build/apk/*.apk"
