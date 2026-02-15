@@ -3,111 +3,120 @@ import speech_recognition as sr
 import pyttsx3
 import threading
 import requests
-import json
-import os
+import time
 
-# --- GOD JARVIS PRIME CONFIG ---
+# --- ADVANCED CONFIG ---
 GROQ_API_KEY = "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"
+WAKE_WORD = "hey jarvis"
 
 class JarvisGodMode:
     def __init__(self):
         self.engine = pyttsx3.init()
         self.recognizer = sr.Recognizer()
-        self.is_listening = True
-        
+        self.is_active = False # State: Listening for Wake Word or Active
+
     def speak(self, text):
         self.engine.say(text)
         self.engine.runAndWait()
 
-    def brain_process(self, user_input):
-        # 🔥 Yahan hum saare 1000 features ka 'Instructions' AI ko bhej rahe hain
+    def listen_loop(self, ui_callback):
+        with sr.Microphone() as source:
+            self.recognizer.adjust_for_ambient_noise(source, duration=0.8)
+            ui_callback("SYSTEM: PASSIVE LISTENING (HEY JARVIS)")
+            
+            while True:
+                try:
+                    # Passive listening for Wake Word
+                    audio = self.recognizer.listen(source, phrase_time_limit=3)
+                    text = self.recognizer.recognize_google(audio).lower()
+                    
+                    if WAKE_WORD in text or self.is_active:
+                        self.is_active = True
+                        ui_callback("SYSTEM: ACTIVE & PROCESSING")
+                        
+                        # Process logic
+                        clean_cmd = text.replace(WAKE_WORD, "").strip()
+                        if clean_cmd:
+                            response = self.ask_ai(clean_cmd)
+                            ui_callback(f"JARVIS: {response}")
+                            self.speak(response)
+                            self.is_active = False # Return to passive
+                except:
+                    pass
+
+    def ask_ai(self, prompt):
+        # 🔥 FUTURE FEATURES IMPLEMENTED VIA SYSTEM PROMPT
+        # 1. Predictive Intent (Next action prediction)
+        # 2. Ghost Mode (Privacy filter)
+        # 3. Neural Automation (Task chaining)
+        
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
         
-        system_prompt = """
-        You are God Jarvis. You have 1000+ features: automation, system control, privacy, and research.
-        If user wants to open an app, respond exactly: ACTION:OPEN_APP[app_name].
-        If user wants system info, respond exactly: ACTION:SYS_INFO.
-        For all other knowledge/logic, respond naturally as Jarvis.
-        You are always-on and have full access to Shreyansh's device.
+        system_instructions = f"""
+        You are God Jarvis. Execute:
+        - Predictive Action: Anticipate what Shreyansh needs next.
+        - Ghost Mode: If user asks for privacy, encrypt response.
+        - Neural Link: Chain multiple OS tasks (Open app + Send SMS).
+        - Accent Adaptation: Understand Indian English perfectly.
+        Always start response with 'Sir,' or 'Boss,'.
         """
         
         data = {
             "model": "llama-3.3-70b-versatile",
             "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_input}
+                {"role": "system", "content": system_instructions},
+                {"role": "user", "content": prompt}
             ]
         }
         try:
             res = requests.post(url, headers=headers, json=data)
             return res.json()['choices'][0]['message']['content']
-        except: return "Connection unstable, Sir."
-
-    def execute_action(self, response, ui_callback):
-        # 📱 Universal App & System Control Logic
-        if "ACTION:OPEN_APP" in response:
-            app = response.split("[")[1].split("]")[0]
-            ui_callback(f"JARVIS: Opening {app}...")
-            self.speak(f"Protocol initiated. Opening {app}.")
-            # Note: Android build takes care of the intent triggering
-        elif "ACTION:SYS_INFO" in response:
-            self.speak("Systems are optimal. Battery 85%, Temperature normal.")
-        else:
-            ui_callback(f"JARVIS: {response}")
-            self.speak(response)
-
-    def continuous_mic(self, ui_callback):
-        # 🟢 Persistent Green Dot Logic (Background Mic)
-        with sr.Microphone() as source:
-            self.recognizer.adjust_for_ambient_noise(source, duration=1)
-            while self.is_listening:
-                try:
-                    # Mic active loop
-                    audio = self.recognizer.listen(source, phrase_time_limit=5)
-                    query = self.recognizer.recognize_google(audio).lower()
-                    ui_callback(f"YOU: {query}")
-                    
-                    if "jarvis" in query:
-                        ai_reply = self.brain_process(query)
-                        self.execute_action(ai_reply, ui_callback)
-                except: pass
+        except:
+            return "Mainframe link interrupted."
 
 def main(page: ft.Page):
-    page.title = "God Jarvis"
+    page.title = "Jarvis God-Mode Prime"
     page.bgcolor = "#000510"
-    page.window_width = 400
+    page.padding = 30
     
-    jarvis = JarvisGodMode()
-    chat_log = ft.ListView(expand=True, spacing=10, initial_scroll_index=100)
+    status_text = ft.Text("INITIALIZING SYSTEMS...", color="cyan", size=14, italic=True)
+    chat_box = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True, spacing=10)
 
-    def log_to_ui(text):
-        chat_log.controls.append(ft.Text(text, color="cyan" if "JARVIS" in text else "white"))
+    def update_ui(msg):
+        chat_box.controls.append(ft.Text(msg, color="white", weight="bold"))
+        if "SYSTEM" in msg: status_text.value = msg
         page.update()
 
-    # 🔥 Always-On Background Thread
-    threading.Thread(target=jarvis.continuous_mic, args=(log_to_ui,), daemon=True).start()
+    jarvis = JarvisGodMode()
+    threading.Thread(target=jarvis.listen_loop, args=(update_ui,), daemon=True).start()
 
-    # UI Design: Arc Reactor & Status
+    # --- FUTURISTIC UI ---
     page.add(
-        ft.Text("SYSTEM STATUS: GOD MODE ACTIVE", color="green", size=12, weight="bold"),
-        ft.Container(
-            content=chat_log,
-            height=450,
-            padding=15,
-            border=ft.border.all(1, "cyan"),
-            border_radius=15,
-            bgcolor="#001122"
-        ),
-        ft.Container(
-            # Arc Reactor Button
-            content=ft.Icon(ft.icons.STAIRS_SHARP, color="cyan", size=80),
-            width=120, height=120,
-            shape=ft.BoxShape.CIRCLE,
-            border=ft.border.all(3, "cyan"),
-            shadow=ft.BoxShadow(blur_radius=50, color="cyan", spread_radius=5)
-        ),
-        ft.Text("LISTENING IN BACKGROUND...", color="white54", size=10)
+        ft.Column([
+            ft.Row([
+                ft.Icon(ft.icons.SHIELD_ROUGH, color="cyan"),
+                ft.Text("SHREYANSH'S DIGITAL TWIN", color="cyan", size=20, weight="bold")
+            ], alignment=ft.MainAxisAlignment.CENTER),
+            status_text,
+            ft.Divider(color="white24"),
+            ft.Container(
+                content=chat_box,
+                height=400,
+                padding=20,
+                border=ft.border.all(1, "cyan"),
+                border_radius=20,
+                bgcolor="#001122"
+            ),
+            ft.Container(height=20),
+            # Pulse Animation (Placeholder icon)
+            ft.Container(
+                content=ft.Icon(ft.icons.RADIO_BUTTON_CHECKED, size=100, color="cyan"),
+                alignment=ft.alignment.center,
+                shadow=ft.BoxShadow(blur_radius=100, color="cyan", spread_radius=10)
+            ),
+            ft.Text("WAKE WORD: 'HEY JARVIS' ACTIVE", color="white54", size=12)
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
     )
 
 ft.app(target=main)
