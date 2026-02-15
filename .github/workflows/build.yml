@@ -1,4 +1,4 @@
-name: Build VEGA Prime
+name: Build VEGA Ghost
 on: [push]
 
 jobs:
@@ -6,33 +6,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
-      # Python Environment Setup
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      
-      # Java Setup (Android Build ke liye zaroori hai)
-      - uses: actions/setup-java@v3
+      - uses: subosito/flutter-action@v2
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          channel: 'stable'
       
-      # Install Libraries
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y portaudio19-dev
           pip install flet requests SpeechRecognition pyttsx3 plyer
-      
-      # Build Process (Magic Fix Included)
+          
       - name: Build APK
         run: |
           yes | flet build apk
           
-      # Upload Result
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VEGA-AI-APK
+          name: VEGA-GHOST-APK
           path: build/apk/*.apk
