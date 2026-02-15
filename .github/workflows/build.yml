@@ -6,9 +6,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+      
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -16,13 +23,18 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y portaudio19-dev
+          sudo apt-get install -y portaudio19-dev libasound2-dev
           pip install flet requests SpeechRecognition pyttsx3 plyer
+      
+      - name: Debug File Structure
+        run: |
+          echo "📂 Files in current directory:"
+          ls -R
           
       - name: Build APK
-        # 🔥 'yes' to auto-accept SDK licenses
+        # 🔥 FIX: Removed '--project' flag. Now it looks for main.py in current folder.
         run: |
-          yes | flet build apk --project "VEGA PRIME"
+          yes | flet build apk --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
