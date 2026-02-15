@@ -1,4 +1,4 @@
-name: Build VEGA Final Fix
+name: Build VEGA Search-and-Build
 on: [push]
 
 jobs:
@@ -26,18 +26,31 @@ jobs:
           sudo apt-get install -y portaudio19-dev libasound2-dev
           pip install flet requests SpeechRecognition pyttsx3 plyer
       
-      - name: 📂 Check Files (Debug)
+      - name: 🕵️‍♂️ Auto-Locate & Build
         run: |
-          echo "Checking file location..."
-          ls -R
+          # 1. Pure Repo mein main.py dhoondo
+          echo "🔍 Searching for main.py..."
+          TARGET_FILE=$(find . -type f -name "main.py" | head -n 1)
           
-      - name: 🚀 Build APK
-        # 🔥 FIX: Added '--module-name main' explicitly
-        run: |
-          yes | flet build apk --module-name main --verbose
+          if [ -z "$TARGET_FILE" ]; then
+            echo "❌ ERROR: main.py mili hi nahi! File upload hui hai ya naam 'Main.py' hai?"
+            ls -R
+            exit 1
+          fi
+          
+          # 2. Us folder ka pata lagao
+          TARGET_DIR=$(dirname "$TARGET_FILE")
+          echo "✅ Found main.py in: $TARGET_DIR"
+          
+          # 3. Us folder ke andar jao
+          cd "$TARGET_DIR"
+          
+          # 4. Ab wahin se Build chalao
+          echo "🚀 Starting Build from correct folder..."
+          yes | flet build apk --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VEGA-ULTIMATE-APK
-          path: build/apk/*.apk
+          name: VEGA-APK
+          path: "**/*.apk"
