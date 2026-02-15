@@ -1,0 +1,13 @@
+[tool.flet.android]
+package_name = "com.shrey.godjarvis"
+permissions = [
+    "INTERNET",
+    "RECORD_AUDIO",
+    "FOREGROUND_SERVICE",
+    "WAKE_LOCK",
+    "QUERY_ALL_PACKAGES",  # 🔥 Isse Jarvis har app ko dekh aur khol payega
+    "RECEIVE_BOOT_COMPLETED"
+]
+
+[tool.flet.android.manifest]
+"android:foregroundServiceType" = "microphone"
