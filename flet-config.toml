@@ -1,15 +1,24 @@
+[tool.flet]
+product_name = "VEGA AI"  # 🔥 App ka naam yahan set hoga
+org = "com.shrey.vega"
+description = "The Ultimate AI Assistant"
+
 [tool.flet.android]
-package_name = "com.shrey.godjarvis"
+build_number = 1
 permissions = [
     "INTERNET",
     "RECORD_AUDIO",
     "FOREGROUND_SERVICE",
+    "CALL_PHONE",
+    "READ_PHONE_STATE",
+    "QUERY_ALL_PACKAGES",
+    "WAKE_LOCK",
     "READ_EXTERNAL_STORAGE",
     "WRITE_EXTERNAL_STORAGE",
-    "MANAGE_EXTERNAL_STORAGE", # 🔥 The God Key for Files
-    "QUERY_ALL_PACKAGES"
+    "MANAGE_EXTERNAL_STORAGE"
 ]
 
 [tool.flet.android.manifest]
 "android:foregroundServiceType" = "microphone"
+"android:usesCleartextTraffic" = "true"
 "android:requestLegacyExternalStorage" = "true"
