@@ -1,4 +1,4 @@
-name: Build VEGA Final
+name: Build VEGA Auto-Find
 on: [push]
 
 jobs:
@@ -11,13 +11,11 @@ jobs:
         with:
           python-version: '3.10'
       
-      # Java Setup (Android build ke liye zaroori)
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
       
-      # Flutter Setup (Flet iske bina nahi chalta)
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -28,17 +26,32 @@ jobs:
           sudo apt-get install -y portaudio19-dev libasound2-dev
           pip install flet requests SpeechRecognition pyttsx3 plyer
       
-      - name: Verify Files (Debug Step)
-        run: ls -R
-          
-      - name: Build APK
-        # 🔥 FIX: Sirf 'flet build apk' chalao.
-        # Wo khud pyproject.toml padhega aur usme se main.py utha lega.
+      - name: 🔍 Find main.py and Build
         run: |
-          yes | flet build apk --verbose
+          # Step 1: main.py ko dhoondo (pure repo mein kahin bhi ho)
+          echo "Looking for main.py..."
+          MAIN_FILE=$(find . -name "main.py" -type f | head -n 1)
+          
+          if [ -z "$MAIN_FILE" ]; then
+            echo "❌ ERROR: main.py mili hi nahi! File name check karo (Main.py vs main.py)."
+            ls -R
+            exit 1
+          fi
+          
+          # Step 2: Us folder mein jao jahan file mili
+          echo "✅ Found main.py at: $MAIN_FILE"
+          TARGET_DIR=$(dirname "$MAIN_FILE")
+          cd "$TARGET_DIR"
+          
+          echo "📂 Changing directory to: $TARGET_DIR"
+          ls -la  # Check kar rahe hain ki file sach mein wahan hai
+          
+          # Step 3: Wahi se Build command chalao
+          # Ab hum pyproject.toml par nirbhar nahi rahenge, direct command denge
+          yes | flet build apk . --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VEGA-ULTIMATE-APK
-          path: build/apk/*.apk
+          name: VEGA-APK
+          path: "**/*.apk" # Kahin bhi APK bane, utha lega
