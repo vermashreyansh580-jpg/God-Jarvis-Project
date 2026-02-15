@@ -1,4 +1,4 @@
-name: Build VEGA Auto-Find
+name: Build VEGA Final Fix
 on: [push]
 
 jobs:
@@ -26,32 +26,18 @@ jobs:
           sudo apt-get install -y portaudio19-dev libasound2-dev
           pip install flet requests SpeechRecognition pyttsx3 plyer
       
-      - name: 🔍 Find main.py and Build
+      - name: 📂 Check Files (Debug)
         run: |
-          # Step 1: main.py ko dhoondo (pure repo mein kahin bhi ho)
-          echo "Looking for main.py..."
-          MAIN_FILE=$(find . -name "main.py" -type f | head -n 1)
+          echo "Checking file location..."
+          ls -R
           
-          if [ -z "$MAIN_FILE" ]; then
-            echo "❌ ERROR: main.py mili hi nahi! File name check karo (Main.py vs main.py)."
-            ls -R
-            exit 1
-          fi
-          
-          # Step 2: Us folder mein jao jahan file mili
-          echo "✅ Found main.py at: $MAIN_FILE"
-          TARGET_DIR=$(dirname "$MAIN_FILE")
-          cd "$TARGET_DIR"
-          
-          echo "📂 Changing directory to: $TARGET_DIR"
-          ls -la  # Check kar rahe hain ki file sach mein wahan hai
-          
-          # Step 3: Wahi se Build command chalao
-          # Ab hum pyproject.toml par nirbhar nahi rahenge, direct command denge
-          yes | flet build apk . --verbose
+      - name: 🚀 Build APK
+        # 🔥 FIX: Added '--module-name main' explicitly
+        run: |
+          yes | flet build apk --module-name main --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VEGA-APK
-          path: "**/*.apk" # Kahin bhi APK bane, utha lega
+          name: VEGA-ULTIMATE-APK
+          path: build/apk/*.apk
