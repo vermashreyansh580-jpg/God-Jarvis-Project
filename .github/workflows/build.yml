@@ -1,5 +1,6 @@
-name: Build Jarvis APK
+name: Build Jarvis Prime
 on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,12 +12,18 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - name: Install Deps
-        run: pip install flet requests SpeechRecognition pyttsx3
+      
+      - name: Install Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y portaudio19-dev
+          pip install flet requests SpeechRecognition pyttsx3
+          
       - name: Build APK
-        run: flet build apk
+        run: flet build apk --name "GodJarvis"
+          
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: jarvis-apk
+          name: God-Jarvis-Prime-APK
           path: build/apk/*.apk
