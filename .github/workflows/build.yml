@@ -1,4 +1,4 @@
-name: Build VEGA Ghost
+name: Build VEGA Ultimate
 on: [push]
 
 jobs:
@@ -20,8 +20,9 @@ jobs:
           pip install flet requests SpeechRecognition pyttsx3 plyer
           
       - name: Build APK
+        # 🔥 'yes' to auto-accept SDK licenses
         run: |
-          yes | flet build apk
+          yes | flet build apk --project "VEGA PRIME"
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
