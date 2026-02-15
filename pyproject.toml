@@ -1,10 +1,10 @@
 [tool.flet]
-product_name = "VEGA PRIME"
+product_name = "VEGA AI"
 org = "com.shrey.vega"
 description = "Ghost AI Assistant"
 
 [tool.flet.app]
-path = "main.py"
+path = "main.py"  # 🔥 Ye line sabse zaroori hai! Iske bina "Not Found" error aata hai.
 
 [tool.flet.android]
 build_number = 1
