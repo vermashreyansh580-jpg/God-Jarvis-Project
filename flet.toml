@@ -1,7 +1,7 @@
 [tool.flet]
 product_name = "VEGA AI"
 org = "com.shrey.vega"
-description = "VEGA Artificial Intelligence"
+description = "Ghost AI Assistant"
 
 [tool.flet.android]
 package_name = "com.shrey.vega"
@@ -10,16 +10,10 @@ permissions = [
     "INTERNET",
     "RECORD_AUDIO",
     "FOREGROUND_SERVICE",
-    "WAKE_LOCK",
-    "MODIFY_AUDIO_SETTINGS",
-    "READ_EXTERNAL_STORAGE",
-    "WRITE_EXTERNAL_STORAGE",
-    "MANAGE_EXTERNAL_STORAGE",
-    "QUERY_ALL_PACKAGES",
-    "SYSTEM_ALERT_WINDOW"
+    "WAKE_LOCK",           # Screen off hone par bhi chalega
+    "SYSTEM_ALERT_WINDOW"  # Background se upar aane ke liye
 ]
 
 [tool.flet.android.manifest]
 "android:foregroundServiceType" = "microphone"
-"android:requestLegacyExternalStorage" = "true"
 "android:usesCleartextTraffic" = "true"
