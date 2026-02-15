@@ -1,4 +1,4 @@
-name: Build VEGA Ultimate
+name: Build VEGA Final
 on: [push]
 
 jobs:
@@ -11,19 +11,34 @@ jobs:
         with:
           python-version: '3.10'
       
+      # Java Setup (Android build ke liye zaroori)
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      # Flutter Setup (Flet iske bina nahi chalta)
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y portaudio19-dev libasound2-dev
           pip install flet requests SpeechRecognition pyttsx3 plyer
       
+      - name: Verify Files (Debug Step)
+        run: ls -R
+          
       - name: Build APK
-        # 🔥 FIX: '.' batata hai ki main.py isi directory mein hai
+        # 🔥 FIX: Sirf 'flet build apk' chalao.
+        # Wo khud pyproject.toml padhega aur usme se main.py utha lega.
         run: |
-          yes | flet build apk .
+          yes | flet build apk --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VEGA-GHOST-APK
+          name: VEGA-ULTIMATE-APK
           path: build/apk/*.apk
