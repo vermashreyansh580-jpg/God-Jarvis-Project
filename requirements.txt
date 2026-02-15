@@ -1,5 +1,5 @@
 flet
 requests
 SpeechRecognition
-pyttsx3
 plyer
+pyttsx3
