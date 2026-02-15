@@ -1,4 +1,4 @@
-name: Build VEGA God Mode
+name: Build VEGA Final Rescue
 on: [push]
 
 jobs:
@@ -23,44 +23,59 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          # Audio drivers for build process
           sudo apt-get install -y portaudio19-dev libasound2-dev
+          python -m pip install --upgrade pip
+          # Requirements install karne se pehle file dhoondenge
+      
+      - name: 📂 Rescue Files to Root
+        run: |
+          echo "🔍 Operation: Rescue Files started..."
+          
+          # 1. main.py ko dhoondo aur Root (.) mein lao
+          MAIN_PATH=$(find . -name "main.py" -type f | head -n 1)
+          if [ -z "$MAIN_PATH" ]; then
+            echo "❌ CRITICAL: main.py mili hi nahi!"
+            exit 1
+          fi
+          if [ "$MAIN_PATH" != "./main.py" ]; then
+            echo "📦 Moving main.py from $MAIN_PATH to Root..."
+            mv "$MAIN_PATH" ./main.py
+          fi
+          
+          # 2. pyproject.toml ko dhoondo aur Root (.) mein lao
+          CONF_PATH=$(find . -name "pyproject.toml" -type f | head -n 1)
+          if [ ! -z "$CONF_PATH" ] && [ "$CONF_PATH" != "./pyproject.toml" ]; then
+             echo "📦 Moving pyproject.toml from $CONF_PATH to Root..."
+             mv "$CONF_PATH" ./pyproject.toml
+          fi
+          
+          # 3. requirements.txt ko dhoondo aur Root (.) mein lao
+          REQ_PATH=$(find . -name "requirements.txt" -type f | head -n 1)
+          if [ ! -z "$REQ_PATH" ] && [ "$REQ_PATH" != "./requirements.txt" ]; then
+             echo "📦 Moving requirements.txt from $REQ_PATH to Root..."
+             mv "$REQ_PATH" ./requirements.txt
+          fi
+          
+          echo "✅ Files Rescued. Current Directory Structure:"
+          ls -la
           
       - name: Install Python Libraries
         run: |
-          # Pehle pip upgrade karo
-          python -m pip install --upgrade pip
-          # requirements.txt se sab install karo
-          pip install -r requirements.txt
-      
-      - name: 🚀 Locate & Build APK
-        run: |
-          # 1. Main.py dhoondo
-          TARGET_FILE=$(find . -name "main.py" -type f | head -n 1)
-          
-          if [ -z "$TARGET_FILE" ]; then
-             echo "❌ Main.py nahi mili!"
-             exit 1
-          fi
-          
-          TARGET_DIR=$(dirname "$TARGET_FILE")
-          cd "$TARGET_DIR"
-          
-          echo "✅ Building in directory: $TARGET_DIR"
-          echo "📂 Checking for Config File..."
-          
-          if [ -f "pyproject.toml" ]; then
-             echo "✅ pyproject.toml found! Permissions will be loaded."
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
           else
-             echo "⚠️ WARNING: pyproject.toml nahi mila! Permissions shayad kaam na karein."
+            # Backup agar file na mile
+            pip install flet requests SpeechRecognition pyttsx3 plyer
           fi
-          
-          # 2. Build Command (Verbose mode for details)
-          # Hum '.' use kar rahe hain taaki wo pyproject.toml aur requirements.txt khud utha le
-          yes | flet build apk . --verbose
+
+      - name: 🚀 Build APK (Force Main)
+        run: |
+          # Ab files Root mein hain, toh hum '.' use karenge
+          # Aur zabardasti batayenge ki module 'main' hai
+          yes | flet build apk . --module-name main --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: VEGA-GOD-MODE
-          path: "**/*.apk"
+          path: "*.apk"
