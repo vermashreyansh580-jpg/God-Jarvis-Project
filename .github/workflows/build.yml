@@ -1,4 +1,4 @@
-name: Build VEGA Final Rescue
+name: Build VEGA Direct Target
 on: [push]
 
 jobs:
@@ -25,38 +25,32 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y portaudio19-dev libasound2-dev
           python -m pip install --upgrade pip
-          # Requirements install karne se pehle file dhoondenge
       
-      - name: 📂 Rescue Files to Root
+      - name: 📂 Move Files to Root (Safest Way)
         run: |
-          echo "🔍 Operation: Rescue Files started..."
-          
-          # 1. main.py ko dhoondo aur Root (.) mein lao
+          # 1. Sabse pehle main.py dhoond kar Root par lao
           MAIN_PATH=$(find . -name "main.py" -type f | head -n 1)
           if [ -z "$MAIN_PATH" ]; then
-            echo "❌ CRITICAL: main.py mili hi nahi!"
+            echo "❌ ERROR: main.py mili hi nahi!"
             exit 1
           fi
           if [ "$MAIN_PATH" != "./main.py" ]; then
-            echo "📦 Moving main.py from $MAIN_PATH to Root..."
             mv "$MAIN_PATH" ./main.py
           fi
           
-          # 2. pyproject.toml ko dhoondo aur Root (.) mein lao
+          # 2. pyproject.toml ko bhi Root par lao (Permissions ke liye)
           CONF_PATH=$(find . -name "pyproject.toml" -type f | head -n 1)
           if [ ! -z "$CONF_PATH" ] && [ "$CONF_PATH" != "./pyproject.toml" ]; then
-             echo "📦 Moving pyproject.toml from $CONF_PATH to Root..."
              mv "$CONF_PATH" ./pyproject.toml
           fi
-          
-          # 3. requirements.txt ko dhoondo aur Root (.) mein lao
+
+          # 3. requirements.txt ko bhi lao
           REQ_PATH=$(find . -name "requirements.txt" -type f | head -n 1)
           if [ ! -z "$REQ_PATH" ] && [ "$REQ_PATH" != "./requirements.txt" ]; then
-             echo "📦 Moving requirements.txt from $REQ_PATH to Root..."
              mv "$REQ_PATH" ./requirements.txt
           fi
           
-          echo "✅ Files Rescued. Current Directory Structure:"
+          echo "✅ Files Moved. Ready to Build."
           ls -la
           
       - name: Install Python Libraries
@@ -64,15 +58,14 @@ jobs:
           if [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
           else
-            # Backup agar file na mile
             pip install flet requests SpeechRecognition pyttsx3 plyer
           fi
 
-      - name: 🚀 Build APK (Force Main)
+      - name: 🚀 Build APK (Direct File Target)
         run: |
-          # Ab files Root mein hain, toh hum '.' use karenge
-          # Aur zabardasti batayenge ki module 'main' hai
-          yes | flet build apk . --module-name main --verbose
+          # 🔥 YAHAN CHANGE HAI: Hum Folder (.) nahi, seedha File de rahe hain.
+          # Flet file ko build karega, aur bagal me padi config file se permissions le lega.
+          yes | flet build apk main.py --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
