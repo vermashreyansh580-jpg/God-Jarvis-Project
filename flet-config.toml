@@ -1,24 +1,25 @@
 [tool.flet]
-product_name = "VEGA AI"  # 🔥 App ka naam yahan set hoga
+product_name = "VEGA AI"
 org = "com.shrey.vega"
-description = "The Ultimate AI Assistant"
 
 [tool.flet.android]
+package_name = "com.shrey.vega"
 build_number = 1
+# 🔥 In permissions ke bina settings mein kuch nahi dikhega
 permissions = [
     "INTERNET",
     "RECORD_AUDIO",
     "FOREGROUND_SERVICE",
-    "CALL_PHONE",
-    "READ_PHONE_STATE",
-    "QUERY_ALL_PACKAGES",
-    "WAKE_LOCK",
+    "MODIFY_AUDIO_SETTINGS",
+    "SYSTEM_ALERT_WINDOW", 
     "READ_EXTERNAL_STORAGE",
     "WRITE_EXTERNAL_STORAGE",
-    "MANAGE_EXTERNAL_STORAGE"
+    "MANAGE_EXTERNAL_STORAGE",
+    "QUERY_ALL_PACKAGES"
 ]
 
 [tool.flet.android.manifest]
 "android:foregroundServiceType" = "microphone"
-"android:usesCleartextTraffic" = "true"
 "android:requestLegacyExternalStorage" = "true"
+# Isse app "Display over other apps" ki list mein aane lagega
+"android:sharedUserId" = ""
