@@ -1,4 +1,4 @@
-name: Build VEGA Search-and-Build
+name: Build VEGA Target Lock
 on: [push]
 
 jobs:
@@ -26,31 +26,35 @@ jobs:
           sudo apt-get install -y portaudio19-dev libasound2-dev
           pip install flet requests SpeechRecognition pyttsx3 plyer
       
-      - name: 🕵️‍♂️ Auto-Locate & Build
+      - name: 🚀 Locate & Build
         run: |
-          # 1. Pure Repo mein main.py dhoondo
+          # 1. Main.py ko dhoondo (Pure ghar mein kahin bhi ho)
           echo "🔍 Searching for main.py..."
-          TARGET_FILE=$(find . -type f -name "main.py" | head -n 1)
+          FILE_PATH=$(find . -name "main.py" -type f | head -n 1)
           
-          if [ -z "$TARGET_FILE" ]; then
-            echo "❌ ERROR: main.py mili hi nahi! File upload hui hai ya naam 'Main.py' hai?"
+          if [ -z "$FILE_PATH" ]; then
+            echo "❌ ERROR: main.py mili hi nahi! File upload check karo."
             ls -R
             exit 1
           fi
           
-          # 2. Us folder ka pata lagao
-          TARGET_DIR=$(dirname "$TARGET_FILE")
-          echo "✅ Found main.py in: $TARGET_DIR"
+          # 2. Us folder ka pata nikalo
+          DIR_PATH=$(dirname "$FILE_PATH")
+          echo "✅ File found at: $FILE_PATH"
+          echo "📂 Going into directory: $DIR_PATH"
           
           # 3. Us folder ke andar jao
-          cd "$TARGET_DIR"
+          cd "$DIR_PATH"
           
-          # 4. Ab wahin se Build chalao
-          echo "🚀 Starting Build from correct folder..."
-          yes | flet build apk --verbose
+          # 4. Proof ke liye list karo
+          ls -la
+          
+          # 5. Ab Build chalao (Dot '.' ka matlab hai 'Yahin build karo')
+          echo "🔨 Building APK..."
+          yes | flet build apk . --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VEGA-APK
+          name: VEGA-APP
           path: "**/*.apk"
