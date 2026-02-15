@@ -1,13 +1,14 @@
 [tool.flet]
-product_name = "VEGA AI"
+product_name = "VEGA GOD MODE"
 org = "com.shrey.vega"
-description = "Ghost AI Assistant"
+description = "System AI with Full Access"
 
 [tool.flet.app]
-path = "main.py"  # 🔥 Ye line sabse zaroori hai! Iske bina "Not Found" error aata hai.
+path = "main.py"
 
 [tool.flet.android]
 build_number = 1
+# 🔥 Ye hai wo list jo Android settings mein dikhegi
 permissions = [
     "INTERNET",
     "RECORD_AUDIO",
@@ -16,16 +17,14 @@ permissions = [
     "MODIFY_AUDIO_SETTINGS",
     "READ_EXTERNAL_STORAGE",
     "WRITE_EXTERNAL_STORAGE",
-    "MANAGE_EXTERNAL_STORAGE",
-    "QUERY_ALL_PACKAGES",
+    "MANAGE_EXTERNAL_STORAGE",  # ⚡ Ye hai "All Files Access" wala magic
     "SYSTEM_ALERT_WINDOW",
     "ACCESS_NETWORK_STATE",
-    "READ_PHONE_STATE",
-    "CALL_PHONE"
+    "QUERY_ALL_PACKAGES"        # ⚡ Dusre apps ko control karne ke liye
 ]
 
 [tool.flet.android.manifest]
 "android:foregroundServiceType" = "microphone"
 "android:requestLegacyExternalStorage" = "true"
 "android:usesCleartextTraffic" = "true"
-"android:launchMode" = "singleTop"
+"android:manageSpaceActivity" = "com.shrey.vega.MainActivity"
