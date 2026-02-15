@@ -1,0 +1,25 @@
+[tool.flet]
+product_name = "VEGA AI"
+org = "com.shrey.vega"
+description = "VEGA Artificial Intelligence"
+
+[tool.flet.android]
+package_name = "com.shrey.vega"
+build_number = 1
+permissions = [
+    "INTERNET",
+    "RECORD_AUDIO",
+    "FOREGROUND_SERVICE",
+    "WAKE_LOCK",
+    "MODIFY_AUDIO_SETTINGS",
+    "READ_EXTERNAL_STORAGE",
+    "WRITE_EXTERNAL_STORAGE",
+    "MANAGE_EXTERNAL_STORAGE",
+    "QUERY_ALL_PACKAGES",
+    "SYSTEM_ALERT_WINDOW"
+]
+
+[tool.flet.android.manifest]
+"android:foregroundServiceType" = "microphone"
+"android:requestLegacyExternalStorage" = "true"
+"android:usesCleartextTraffic" = "true"
