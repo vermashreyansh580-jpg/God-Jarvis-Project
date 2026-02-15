@@ -1,4 +1,4 @@
-name: Build VEGA Target Lock
+name: Build VEGA Clean Force
 on: [push]
 
 jobs:
@@ -26,35 +26,32 @@ jobs:
           sudo apt-get install -y portaudio19-dev libasound2-dev
           pip install flet requests SpeechRecognition pyttsx3 plyer
       
-      - name: 🚀 Locate & Build
+      - name: 🗑️ Clean & Force Build
         run: |
-          # 1. Main.py ko dhoondo (Pure ghar mein kahin bhi ho)
+          # 1. Main.py dhoondo
           echo "🔍 Searching for main.py..."
-          FILE_PATH=$(find . -name "main.py" -type f | head -n 1)
+          TARGET_FILE=$(find . -name "main.py" -type f | head -n 1)
           
-          if [ -z "$FILE_PATH" ]; then
-            echo "❌ ERROR: main.py mili hi nahi! File upload check karo."
-            ls -R
+          if [ -z "$TARGET_FILE" ]; then
+            echo "❌ ERROR: main.py mili hi nahi!"
             exit 1
           fi
           
-          # 2. Us folder ka pata nikalo
-          DIR_PATH=$(dirname "$FILE_PATH")
-          echo "✅ File found at: $FILE_PATH"
-          echo "📂 Going into directory: $DIR_PATH"
+          # 2. Us folder mein jao
+          TARGET_DIR=$(dirname "$TARGET_FILE")
+          cd "$TARGET_DIR"
+          echo "✅ Moved to directory: $TARGET_DIR"
           
-          # 3. Us folder ke andar jao
-          cd "$DIR_PATH"
+          # 3. Conflicting Configs Delete karo (Sabse Zaroori Step)
+          echo "🗑️ Deleting old config files to avoid errors..."
+          rm -f pyproject.toml flet.toml
           
-          # 4. Proof ke liye list karo
-          ls -la
-          
-          # 5. Ab Build chalao (Dot '.' ka matlab hai 'Yahin build karo')
-          echo "🔨 Building APK..."
-          yes | flet build apk . --verbose
+          # 4. Ab direct command se build karo (Explicitly pointing to main)
+          echo "🚀 Building APK with Clean Slate..."
+          yes | flet build apk --module-name main --verbose
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VEGA-APP
+          name: VEGA-APK
           path: "**/*.apk"
