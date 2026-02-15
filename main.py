@@ -3,8 +3,8 @@ import speech_recognition as sr
 import pyttsx3
 import threading
 import requests
-import time
-import math
+import os
+import shutil
 
 # --- CONFIG ---
 GROQ_API_KEY = "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"
@@ -14,156 +14,115 @@ class JarvisBrain:
         self.page = page
         self.engine = pyttsx3.init()
         self.recognizer = sr.Recognizer()
-        self.is_listening = True
+        # Android Root Path
+        self.root_path = "/storage/emulated/0/" 
 
     def speak(self, text):
         self.engine.say(text)
         self.engine.runAndWait()
 
-    def animate_reactor(self, is_talking):
-        # Pulse Animation logic
-        scale = 1.2 if is_talking else 1.0
-        shadow = 50 if is_talking else 20
-        self.page.reactor.scale = scale
-        self.page.reactor.shadow.blur_radius = shadow
-        self.page.update()
+    # --- FILE SYSTEM POWERS ---
+    def find_file(self, filename):
+        results = []
+        # Searching primarily in Documents/Downloads to save time
+        search_dirs = [
+            os.path.join(self.root_path, "Download"),
+            os.path.join(self.root_path, "Documents"),
+            os.path.join(self.root_path, "DCIM")
+        ]
+        for folder in search_dirs:
+            for root, dirs, files in os.walk(folder):
+                if filename.lower() in [f.lower() for f in files]:
+                    results.append(os.path.join(root, filename))
+        return results[0] if results else None
 
+    def delete_file(self, filepath):
+        try:
+            os.remove(filepath)
+            return "File deleted successfully."
+        except: return "Permission denied or file not found."
+
+    def create_folder(self, folder_name):
+        path = os.path.join(self.root_path, folder_name)
+        os.makedirs(path, exist_ok=True)
+        return f"Folder {folder_name} created."
+
+    # --- BRAIN & LISTENER ---
     def listen_loop(self, chat_callback):
         with sr.Microphone() as source:
-            self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+            self.recognizer.adjust_for_ambient_noise(source)
             while True:
                 try:
-                    # Green Dot Active
                     audio = self.recognizer.listen(source, phrase_time_limit=5)
-                    text = self.recognizer.recognize_google(audio).lower()
-                    
-                    chat_callback(f"YOU: {text}", is_user=True)
+                    # "hi-IN" helps capture Hindi/English mix better
+                    text = self.recognizer.recognize_google(audio, language="hi-IN").lower()
                     
                     if "jarvis" in text:
-                        self.animate_reactor(True) # Glow Effect ON
-                        response = self.ask_ai(text)
-                        chat_callback(f"JARVIS: {response}", is_user=False)
-                        self.speak(response)
-                        self.animate_reactor(False) # Glow Effect OFF
-                except:
-                    pass
+                        clean_text = text.replace("jarvis", "").strip()
+                        chat_callback(f"YOU: {clean_text}", True)
+                        
+                        response = self.ask_ai(clean_text)
+                        
+                        # EXECUTE FILE ACTIONS
+                        if "ACTION:SEARCH:" in response:
+                            fname = response.split(":")[2]
+                            path = self.find_file(fname)
+                            reply = f"Found it at: {path}" if path else "File not found."
+                            chat_callback(f"JARVIS: {reply}", False)
+                            self.speak(reply)
+                        
+                        elif "ACTION:DELETE:" in response:
+                            path = response.split(":")[2]
+                            status = self.delete_file(path)
+                            chat_callback(f"JARVIS: {status}", False)
+                            self.speak(status)
+                            
+                        else:
+                            chat_callback(f"JARVIS: {response}", False)
+                            self.speak(response)
+                except: pass
 
     def ask_ai(self, prompt):
-        # IN-APP CONTROLS
-        if "clear" in prompt: return "CLEAR_LOGS"
-        if "red theme" in prompt: return "THEME_RED"
-        if "blue theme" in prompt: return "THEME_BLUE"
-
-        # AI BRAIN
+        # SYSTEM PROMPT FOR MULTILINGUAL & FILES
+        sys_msg = """
+        You are God Jarvis. 
+        1. LANGUAGE: Detect user language (Hindi/English) and reply in the SAME language.
+        2. FILES: If user asks to find a file, reply ONLY: ACTION:SEARCH:filename.ext
+        3. DELETE: If user asks to delete, reply ONLY: ACTION:DELETE:filepath
+        4. GENERAL: Be helpful and concise.
+        """
+        
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
         data = {
             "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "system", "content": "You are Jarvis. Be cool, futuristic, and concise."},
+            "messages": [{"role": "system", "content": sys_msg},
                          {"role": "user", "content": prompt}]
         }
         try:
             return requests.post(url, headers=headers, json=data).json()['choices'][0]['message']['content']
-        except: return "Server uplink failed."
+        except: return "Server Error."
 
 def main(page: ft.Page):
-    page.title = "God Jarvis HUD"
-    page.bgcolor = "#000510" # Deep Space Black
+    page.title = "Jarvis FileManager"
+    page.bgcolor = "#000510"
     page.theme_mode = ft.ThemeMode.DARK
-    page.padding = 0
     
-    # --- UI COMPONENTS ---
-    
-    # 1. Background Gradient (Cyberpunk Look)
-    background = ft.Container(
-        expand=True,
-        gradient=ft.RadialGradient(
-            center=ft.alignment.center,
-            radius=1.5,
-            colors=["#001F3F", "#000000"],
-        )
-    )
-
-    # 2. Chat Area (Glassmorphism)
-    chat_list = ft.ListView(expand=True, spacing=15, padding=20, auto_scroll=True)
-    
-    chat_container = ft.Container(
-        content=chat_list,
-        height=400,
-        margin=ft.margin.symmetric(horizontal=20),
-        padding=10,
-        border_radius=20,
-        border=ft.border.all(1, color=ft.colors.with_opacity(0.3, "cyan")),
-        bgcolor=ft.colors.with_opacity(0.1, "black"), # Glass effect
-        blur=ft.Blur(10, 10)
-    )
-
-    # 3. The Arc Reactor (Animated Button)
-    reactor_icon = ft.Icon(ft.icons.POWER_SETTINGS_NEW, size=60, color="cyan")
-    
-    reactor = ft.Container(
-        content=reactor_icon,
-        width=120, height=120,
-        border_radius=60,
-        border=ft.border.all(4, "cyan"),
-        bgcolor=ft.colors.with_opacity(0.1, "cyan"),
-        shadow=ft.BoxShadow(blur_radius=20, color="cyan", spread_radius=2),
-        animate_scale=ft.animation.Animation(500, ft.AnimationCurve.BOUNCE_OUT),
-        alignment=ft.alignment.center,
-        on_click=lambda _: page.snack_bar.show()
-    )
-    page.reactor = reactor # Store for animation access
-
-    # --- LOGIC HANDLING ---
     brain = JarvisBrain(page)
+    chat_list = ft.ListView(expand=True, spacing=10, padding=20)
 
-    def add_message(msg, is_user):
-        # Special In-App Commands
-        if msg == "JARVIS: CLEAR_LOGS":
-            chat_list.controls.clear()
-            page.update()
-            return
-        if msg == "JARVIS: THEME_RED":
-            reactor_icon.color = "red"
-            reactor.border.border_side.color = "red"
-            reactor.shadow.color = "red"
-            page.update()
-            return
-
-        # Chat Bubble Design
+    def add_msg(text, is_user):
         align = ft.MainAxisAlignment.END if is_user else ft.MainAxisAlignment.START
-        color = "white" if is_user else "cyan"
-        bg_color = ft.colors.with_opacity(0.2, "white") if is_user else ft.colors.with_opacity(0.2, "cyan")
-        
-        bubble = ft.Row([
-            ft.Container(
-                content=ft.Text(msg, color=color, weight="bold", font_family="Courier"),
-                padding=15,
-                border_radius=15,
-                bgcolor=bg_color,
-                border=ft.border.all(1, color)
-            )
-        ], alignment=align)
-        
-        chat_list.controls.append(bubble)
+        color = "cyan" if not is_user else "white"
+        chat_list.controls.append(ft.Row([ft.Text(text, color=color, weight="bold")], alignment=align))
         page.update()
 
-    # Start Background Voice
-    threading.Thread(target=brain.listen_loop, args=(add_message,), daemon=True).start()
+    threading.Thread(target=brain.listen_loop, args=(add_msg,), daemon=True).start()
 
-    # --- FINAL LAYOUT ---
-    ui_layer = ft.Column([
-        ft.Container(height=50),
-        ft.Text("J.A.R.V.I.S  P.R.I.M.E", size=24, weight="bold", color="cyan", letter_spacing=5, text_align="center"),
-        ft.Text("SYSTEM STATUS: ONLINE | MIC: ACTIVE", size=10, color="green"),
-        ft.Container(height=20),
-        reactor,
-        ft.Container(height=30),
-        chat_container,
-        ft.Container(height=20),
-        ft.Text("DESIGNED BY SHREYANSH", color="white24", size=10)
-    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-
-    page.add(ft.Stack([background, ui_layer]))
+    page.add(
+        ft.AppBar(title=ft.Text("JARVIS FILE GOD"), bgcolor="#001F3F"),
+        ft.Container(content=chat_list, expand=True, border=ft.border.all(1, "cyan"), border_radius=10, margin=10),
+        ft.Text("ACCESS: ALL FILES | LANG: MULTI", color="green", size=10, text_align="center")
+    )
 
 ft.app(target=main)
